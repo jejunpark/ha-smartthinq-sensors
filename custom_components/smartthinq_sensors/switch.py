@@ -93,10 +93,24 @@ REFRIGERATOR_SWITCH: tuple[ThinQSwitchEntityDescription, ...] = (
 AC_SWITCH: tuple[ThinQSwitchEntityDescription, ...] = (
     ThinQSwitchEntityDescription(
         key=AirConditionerFeatures.MODE_AIRCLEAN,
-        name="Ionizer",
-        icon="mdi:pine-tree",
+        name="Airclean",
+        icon="mdi:air-purifier",
         turn_off_fn=lambda x: x.device.set_mode_airclean(False),
         turn_on_fn=lambda x: x.device.set_mode_airclean(True),
+    ),
+    ThinQSwitchEntityDescription(
+        key=AirConditionerFeatures.POWERSAVE,
+        name="Powersave",
+        icon="mdi:leaf",
+        turn_off_fn=lambda x: x.device.set_powersave(False),
+        turn_on_fn=lambda x: x.device.set_powersave(True),
+    ),
+    ThinQSwitchEntityDescription(
+        key=AirConditionerFeatures.AUTODRY,
+        name="Autodry",
+        icon="mdi:hair-dryer-outline",
+        turn_off_fn=lambda x: x.device.set_autodry(False),
+        turn_on_fn=lambda x: x.device.set_autodry(True),
     ),
     ThinQSwitchEntityDescription(
         key=AirConditionerFeatures.MODE_JET,
