@@ -55,18 +55,9 @@ HVAC_MODE_LOOKUP: dict[str, HVACMode] = {
     ACMode.HEAT.name: HVACMode.HEAT,
     ACMode.DRY.name: HVACMode.DRY,
     ACMode.COOL.name: HVACMode.COOL,
-    ACMode.FAN.name: HVACMode.FAN_ONLY,
+    ACMode.AIRCLEAN.name: HVACMode.FAN_ONLY,
     ACMode.ACO.name: HVACMode.HEAT_COOL,
 }
-
-FAN_MODE_LOOKUP: dict[str, str] = {
-    ACFanSpeed.AUTO.name: FAN_AUTO,
-    ACFanSpeed.HIGH.name: FAN_HIGH,
-    ACFanSpeed.LOW.name: FAN_LOW,
-    ACFanSpeed.MID.name: FAN_MEDIUM,
-    ACFanSpeed.NATURE.name: FAN_DIFFUSE,
-}
-FAN_MODE_REVERSE_LOOKUP = {v: k for k, v in FAN_MODE_LOOKUP.items()}
 
 PRESET_MODE_LOOKUP: dict[str, dict[str, HVACMode]] = {
     ACMode.ENERGY_SAVING.name: {"preset": PRESET_ECO, "hvac": HVACMode.COOL},
@@ -205,13 +196,11 @@ class LGEACClimate(LGEClimate):
         super().__init__(api)
         self._device: AirConditionerDevice = api.device
         self._attr_unique_id = f"{api.unique_id}-AC"
-        self._attr_fan_modes = [
-            FAN_MODE_LOOKUP.get(s, s) for s in self._device.fan_speeds
-        ]
+        self._attr_fan_modes = self._device.fan_speeds
 
         self._use_h_mode = False
-        self._attr_swing_modes = self._device.vertical_step_modes or None
-        self._attr_swing_horizontal_modes = self._device.horizontal_step_modes or None
+        self._attr_swing_modes = self._device.vertical_swing_modes or None
+        self._attr_swing_horizontal_modes = self._device.horizontal_swing_modes or None
         if not self._attr_swing_modes and self._attr_swing_horizontal_modes:
             self._attr_swing_modes = self._attr_swing_horizontal_modes
             self._attr_swing_horizontal_modes = None
@@ -378,22 +367,21 @@ class LGEACClimate(LGEClimate):
     def fan_mode(self) -> str | None:
         """Return the fan setting."""
         speed = self._api.state.fan_speed
-        return FAN_MODE_LOOKUP.get(speed, speed)
+        return speed
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
         """Set new target fan mode."""
-        lg_fan_mode = FAN_MODE_REVERSE_LOOKUP.get(fan_mode, fan_mode)
-        if lg_fan_mode not in self._device.fan_speeds:
+        if fan_mode not in self.fan_modes:
             raise ValueError(f"Invalid fan mode [{fan_mode}]")
-        await self._device.set_fan_speed(lg_fan_mode)
+        await self._device.set_fan_speed(fan_mode)
         self._api.async_set_updated()
 
     @property
     def swing_mode(self) -> str | None:
         """Return the swing mode setting."""
         if self._use_h_mode:
-            return self._api.state.horizontal_step_mode
-        return self._api.state.vertical_step_mode
+            return self._api.state.horizontal_swing_mode
+        return self._api.state.vertical_swing_mode
 
     async def async_set_swing_mode(self, swing_mode: str) -> None:
         """Set new target swing operation."""
@@ -402,15 +390,15 @@ class LGEACClimate(LGEClimate):
 
         if swing_mode != self.swing_mode:
             if self._use_h_mode:
-                await self._device.set_horizontal_step_mode(swing_mode)
+                await self._device.set_horizontal_swing_mode(swing_mode)
             else:
-                await self._device.set_vertical_step_mode(swing_mode)
+                await self._device.set_vertical_swing_mode(swing_mode)
             self._api.async_set_updated()
 
     @property
     def swing_horizontal_mode(self) -> str | None:
         """Return the horizontal swing mode setting."""
-        return self._api.state.horizontal_step_mode
+        return self._api.state.horizontal_swing_mode
 
     async def async_set_swing_horizontal_mode(self, swing_horizontal_mode: str) -> None:
         """Set new target horizontal swing operation."""
@@ -420,7 +408,7 @@ class LGEACClimate(LGEClimate):
             )
 
         if swing_horizontal_mode != self.swing_horizontal_mode:
-            await self._device.set_horizontal_step_mode(swing_horizontal_mode)
+            await self._device.set_horizontal_swing_mode(swing_horizontal_mode)
             self._api.async_set_updated()
 
     async def async_turn_on(self) -> None:
