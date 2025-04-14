@@ -1,5 +1,11 @@
 # LG ThinQ Devices integration for HomeAssistant
 
+[ollo69]: https://github.com/ollo69 의 코드를 수정한 컴포넌트입니다.
+
+
+
+
+
 [![](https://img.shields.io/github/release/ollo69/ha-smartthinq-sensors/all.svg?style=for-the-badge)](https://github.com/ollo69/ha-smartthinq-sensors/releases)
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 [![](https://img.shields.io/github/license/ollo69/ha-smartthinq-sensors?style=for-the-badge)](LICENSE)
