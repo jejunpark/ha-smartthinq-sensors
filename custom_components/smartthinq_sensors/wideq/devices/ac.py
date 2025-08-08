@@ -27,12 +27,12 @@ SUPPORT_RAC_MODE = ["SupportRACMode", "support.racMode"]
 SUPPORT_RAC_SUBMODE = ["SupportRACSubMode", "support.racSubMode"]
 
 SUPPORT_VANE_HSTEP = [SUPPORT_WIND_DIR, "@AC_MAIN_WIND_DIRECTION_LEFT_RIGHT_W"]
-SUPPORT_VANE_VSTEP = [SUPPORT_WIND_DIR, "@AC_MAIN_WIND_DIRECTION_UP_DOWN_W"]
+SUPPORT_VANE_VSTEP = [SUPPORT_RAC_SUBMODE, "@AC_MAIN_WIND_DIRECTION_SWING_UP_DOWN_W"]
 SUPPORT_VANE_HSWING = [
-    SUPPORT_WIND_DIR,
-    "@AC_MAIN_WIND_DIRECTION_LEFT_RIGHT_W",
+    SUPPORT_RAC_SUBMODE,
+    "@AC_MAIN_WIND_DIRECTION_SWING_LEFT_RIGHT_W",
 ]
-SUPPORT_VANE_VSWING = [SUPPORT_WIND_DIR, "@AC_MAIN_WIND_DIRECTION_UP_DOWN_W"]
+SUPPORT_VANE_VSWING = [SUPPORT_RAC_SUBMODE, "@AC_MAIN_WIND_DIRECTION_SWING_UP_DOWN_W"]
 SUPPORT_JET_COOL = [SUPPORT_RAC_SUBMODE, "@AC_MAIN_WIND_MODE_COOL_JET_W"]
 SUPPORT_JET_HEAT = [SUPPORT_RAC_SUBMODE, "@AC_MAIN_WIND_MODE_HEAT_JET_W"]
 SUPPORT_AIRCLEAN = [SUPPORT_PAC_MODE, "@AIRCLEAN"]
@@ -198,12 +198,12 @@ class ACMode(Enum):
 class ACFanSpeed(Enum):
     """The fan speed for an AC/HVAC device."""
 
-    약풍 = '@AC_MAIN_WIND_STRENGTH_LOW_LEFT_W|AC_MAIN_WIND_STRENGTH_LOW_RIGHT_W'
-    중풍 = '@AC_MAIN_WIND_STRENGTH_MID_LEFT_W|AC_MAIN_WIND_STRENGTH_MID_RIGHT_W'
-    강풍 = '@AC_MAIN_WIND_STRENGTH_HIGH_LEFT_W|AC_MAIN_WIND_STRENGTH_HIGH_RIGHT_W'
-    쿨파워 = '@AC_MAIN_WIND_STRENGTH_POWER_LEFT_W|AC_MAIN_WIND_STRENGTH_POWER_RIGHT_W'
-    롱파워 = '@AC_MAIN_WIND_STRENGTH_LONGPOWER_LEFT_W|AC_MAIN_WIND_STRENGTH_LONGPOWER_RIGHT_W'
-    스마트 = '@AC_MAIN_WIND_STRENGTH_AUTO_LEFT_W|AC_MAIN_WIND_STRENGTH_AUTO_RIGHT_W'
+    미약풍 = '@AC_MAIN_WIND_STRENGTH_SLOW_LOW_W'
+    약풍 = '@AC_MAIN_WIND_STRENGTH_LOW_W'
+    중풍 = '@AC_MAIN_WIND_STRENGTH_MID_W'
+    강풍 = '@AC_MAIN_WIND_STRENGTH_HIGH_W'
+    파워풍 = '@AC_MAIN_WIND_STRENGTH_POWER_W'
+    자동 = '@AC_MAIN_WIND_STRENGTH_AUTO_W'
 
 
 class ACVStepMode(Enum):
@@ -216,14 +216,20 @@ class ACVStepMode(Enum):
     All is 100.
     """
     
-    Off = "@OFF"
-    Top = "@1"
-    MiddleTop1 = "@2"
-    MiddleTop2 = "@3"
-    MiddleBottom2 = "@4"
-    MiddleBottom1 = "@5"
-    Bottom = "@6"
-    Swing = "@100"
+    # Off = "@OFF"
+    # Top = "@1"
+    # MiddleTop1 = "@2"
+    # MiddleTop2 = "@3"
+    # MiddleBottom2 = "@4"
+    # MiddleBottom1 = "@5"
+    # Bottom = "@6"
+    # Swing = "@100"
+
+    상 = 1
+    중상 = 2
+    중 = 3
+    중하 = 4
+    하 = 5
 
 
 class ACVSwingMode(Enum):
@@ -1488,3 +1494,4 @@ class AirConditionerStatus(DeviceStatus):
             self.hot_water_current_temp,
             self.reservation_sleep_time,
         ]
+
