@@ -208,9 +208,6 @@ class LGEACClimate(LGEClimate):
 
         self._attr_preset_mode = None
 
-        # 여기
-        self._attr_wind_direction_vertical = self._device.vertical_step_modes or None
-
         self._hvac_mode_lookup: dict[str, HVACMode] | None = None
         self._preset_mode_lookup: dict[str, str] | None = None
 
@@ -257,31 +254,12 @@ class LGEACClimate(LGEClimate):
             features |= ClimateEntityFeature.SWING_MODE
         if self.swing_horizontal_modes:
             features |= ClimateEntityFeature.SWING_HORIZONTAL_MODE
-        if self._device.vertical_step_modes:
-            features |= ClimateEntityFeature.WIND_DIRECTION_VERTICAL
         return features
 
     @property
     def target_temperature_step(self) -> float:
         """Return the supported step of target temperature."""
         return self._device.target_temperature_step
-    
-    # 여기
-    @property
-    def wind_direction_vertical(self) -> int:
-        """Return the vertical wind direction setting."""
-        return self._api.state.wind_direction_vertical
-    
-    async def async_set_wind_direction_vertical(self, wind_direction_vertical: int) -> None:
-        """Set vertical wind direction (1..6)."""
-        # 유효성 체크: device가 노출한 옵션(ACVStepMode 리스트) 기준
-        options = self._device.vertical_step_modes or []
-        valid = {int(m) for m in options}  # IntEnum -> int
-        if wind_direction_vertical not in valid:
-            raise ValueError(f"Invalid vertical wind direction: {wind_direction_vertical}")
-
-        await self._device.set_vertical_step_mode(wind_direction_vertical)
-        self._api.async_set_updated()
 
     @property
     def temperature_unit(self) -> str:
