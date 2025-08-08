@@ -755,32 +755,32 @@ class AirConditionerDevice(Device):
 
     async def set_vertical_step_mode(self, mode):
         """Set vertical step. Accepts ACVStepMode|int|str ('STEP_1' or '1')."""
-        # 1) 입력 정규화: enum / 이름 / 정수 모두 허용
         if isinstance(mode, ACVStepMode):
             level = int(mode)
         elif isinstance(mode, int):
             level = mode
         elif isinstance(mode, str):
             try:
-                # "STEP_1" 같은 enum 이름
-                level = int(ACVStepMode[mode])
+                level = int(ACVStepMode[mode])  # "STEP_1"
             except KeyError:
-                # "1" 같은 숫자 문자열
-                level = int(mode)
+                level = int(mode)               # "1"
         else:
             raise ValueError(f"Invalid vertical step mode type: {type(mode)}")
 
-        # 2) 유효 범위: 1..6
-        if level not in range(1, 7):
+        if level not in (1, 2, 3, 4, 5, 6):
             raise ValueError(f"Invalid vertical step level: {level}")
 
-        # 3) 명령 키 해석
         keys = self._get_cmd_keys(CMD_STATE_WDIR_VSTEP)
-        # 일부 구현에서 keys[2]가 리스트일 수 있으므로 안전하게 실키로 보정
-        prop_key = self._get_state_key(STATE_WDIR_VSTEP[0]) or STATE_WDIR_VSTEP[1]
 
-        # 4) enum 매핑 없이 정수 그대로 전송 (네 장치가 1..6을 직접 받음)
+        # 핵심: enum 매핑 없이, **정수 그대로** 보낸다
+        prop_key = self._get_state_key(STATE_WDIR_VSTEP)  # 리스트 전체 넘기는게 원 코드 패턴
         await self.set(keys[0], keys[1], key=prop_key, value=level)
+
+        # (선택) 낙관적 업데이트: 바로 상태에 반영해 UI 지연을 줄임
+        try:
+            self._status._data[prop_key] = level  # pylint: disable=protected-access
+        except Exception:
+            pass
 
 
     async def set_vertical_swing_mode(self, mode):
@@ -1188,26 +1188,23 @@ class AirConditionerStatus(DeviceStatus):
     #     except ValueError:
     #         return None
     def wind_direction_vertical(self) -> int | None:
-        """Return current vertical wind step as int (1..6) or None."""
-        # STATE_WDIR_VSTEP = ["WDirVStep", "airState.wDir.vStep"]
-        key = self._get_state_key(STATE_WDIR_VSTEP[0]) or STATE_WDIR_VSTEP[1]
+    """Return current vertical wind step as int (1..6) or None."""
+    # 리스트 전체를 넘기는게 에너지/다른 센서들 패턴과 동일
+    key = self._get_state_key(STATE_WDIR_VSTEP)
 
-        # Status 클래스에선 _get_device_property가 없으므로 _data에서 직접 읽는다
-        raw = self._data.get(key)
+    # Status는 _get_device_property가 없으니 _data에서 직접 읽음
+    raw = self._data.get(key)
+    val = self.to_int_or_none(raw)
 
-        # 정수 파싱 시도
-        val = self.to_int_or_none(raw)
+    if val is None:
+        # (호환) 일부 모델이 enum 같이 줄 수도 있으니 폴백
+        enum_val = self.lookup_enum(key, True)
+        try:
+            val = int(enum_val) if enum_val is not None else None
+        except (TypeError, ValueError):
+            val = None
 
-        # 정수로 못 읽힌 경우, enum 매핑을 폴백으로 시도 (일부 모델 호환)
-        if val is None:
-            enum_val = self.lookup_enum(key, True)
-            try:
-                val = int(enum_val) if enum_val is not None else None
-            except (TypeError, ValueError):
-                val = None
-
-        # 1..6만 유효
-        return val if val in (1, 2, 3, 4, 5, 6) else None
+    return val if val in (1, 2, 3, 4, 5, 6) else None
 
 
 
