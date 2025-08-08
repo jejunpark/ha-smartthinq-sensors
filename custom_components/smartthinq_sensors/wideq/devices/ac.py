@@ -1187,27 +1187,27 @@ class AirConditionerStatus(DeviceStatus):
     #         return ACVStepMode(value).name
     #     except ValueError:
     #         return None
-    def wind_direction_vertical(self):
-    """Return current vertical wind step as int (1..6) or None."""
-    # STATE_WDIR_VSTEP = ["WDirVStep", "airState.wDir.vStep"]
-    key = self._get_state_key(STATE_WDIR_VSTEP[0]) or STATE_WDIR_VSTEP[1]
+    def wind_direction_vertical(self) -> int | None:
+        """Return current vertical wind step as int (1..6) or None."""
+        # STATE_WDIR_VSTEP = ["WDirVStep", "airState.wDir.vStep"]
+        key = self._get_state_key(STATE_WDIR_VSTEP[0]) or STATE_WDIR_VSTEP[1]
 
-    # Status 클래스는 _get_device_property가 없으니 _data에서 직접 읽기
-    raw = self._data.get(key)
+        # Status 클래스에선 _get_device_property가 없으므로 _data에서 직접 읽는다
+        raw = self._data.get(key)
 
-    # 정수로 바로 파싱
-    val = self.to_int_or_none(raw)
+        # 정수 파싱 시도
+        val = self.to_int_or_none(raw)
 
-    # 못 읽었으면 enum lookup을 폴백으로 시도 (일부 모델 호환)
-    if val is None:
-        enum_val = self.lookup_enum(key, True)
-        try:
-            val = int(enum_val) if enum_val is not None else None
-        except (TypeError, ValueError):
-            val = None
+        # 정수로 못 읽힌 경우, enum 매핑을 폴백으로 시도 (일부 모델 호환)
+        if val is None:
+            enum_val = self.lookup_enum(key, True)
+            try:
+                val = int(enum_val) if enum_val is not None else None
+            except (TypeError, ValueError):
+                val = None
 
-    # 1..6만 유효
-    return val if val in (1, 2, 3, 4, 5, 6) else None
+        # 1..6만 유효
+        return val if val in (1, 2, 3, 4, 5, 6) else None
 
 
 
