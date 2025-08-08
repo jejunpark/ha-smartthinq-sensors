@@ -257,6 +257,8 @@ class LGEACClimate(LGEClimate):
             features |= ClimateEntityFeature.SWING_MODE
         if self.swing_horizontal_modes:
             features |= ClimateEntityFeature.SWING_HORIZONTAL_MODE
+        if self._device.vertical_step_modes:
+            features |= ClimateEntityFeature.WIND_DIRECTION_VERTICAL
         return features
 
     @property
@@ -269,6 +271,17 @@ class LGEACClimate(LGEClimate):
     def wind_direction_vertical(self) -> int:
         """Return the vertical wind direction setting."""
         return self._api.state.wind_direction_vertical
+    
+    async def async_set_wind_direction_vertical(self, wind_direction_vertical: int) -> None:
+        """Set vertical wind direction (1..6)."""
+        # 유효성 체크: device가 노출한 옵션(ACVStepMode 리스트) 기준
+        options = self._device.vertical_step_modes or []
+        valid = {int(m) for m in options}  # IntEnum -> int
+        if wind_direction_vertical not in valid:
+            raise ValueError(f"Invalid vertical wind direction: {wind_direction_vertical}")
+
+        await self._device.set_vertical_step_mode(wind_direction_vertical)
+        self._api.async_set_updated()
 
     @property
     def temperature_unit(self) -> str:

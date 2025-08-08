@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import Enum, IntEnum
 import logging
 
 from ..backports.functools import cached_property
@@ -206,7 +206,7 @@ class ACFanSpeed(Enum):
     자동 = '@AC_MAIN_WIND_STRENGTH_AUTO_W'
 
 
-class ACVStepMode(Enum):
+class ACVStepMode(IntEnum):
     """
     The vertical step mode for an AC/HVAC device.
 
@@ -225,11 +225,12 @@ class ACVStepMode(Enum):
     # Bottom = "@6"
     # Swing = "@100"
 
-    상 = 1
-    중상 = 2
-    중 = 3
-    중하 = 4
-    하 = 5
+    STEP_1 = 1
+    STEP_2 = 2
+    STEP_3 = 3
+    STEP_4 = 4
+    STEP_5 = 5
+    STEP_6 = 6
 
 
 class ACVSwingMode(Enum):
@@ -578,7 +579,7 @@ class AirConditionerDevice(Device):
         """Return a list of available vertical step modes."""
         if not self._is_mode_supported(SUPPORT_VANE_VSTEP):
             return []
-        return self._get_property_values(STATE_WDIR_VSTEP, ACVStepMode)
+        return list(ACVStepMode)
 
     @cached_property
     def vertical_swing_modes(self):
@@ -744,13 +745,43 @@ class AirConditionerDevice(Device):
         swing_mode = self.model_info.enum_value(keys[2], ACHSwingMode[mode].value)
         await self.set(keys[0], keys[1], key=keys[2], value=swing_mode)
 
+    # async def set_vertical_step_mode(self, mode):
+    #     """Set the vertical step to a value from the `ACVStepMode` enum."""
+    #     if mode not in self.vertical_step_modes:
+    #         raise ValueError(f"Invalid vertical step mode: {mode}")
+    #     keys = self._get_cmd_keys(CMD_STATE_WDIR_VSTEP)
+    #     step_mode = self.model_info.enum_value(keys[2], ACVStepMode[mode].value)
+    #     await self.set(keys[0], keys[1], key=keys[2], value=step_mode)
+
     async def set_vertical_step_mode(self, mode):
-        """Set the vertical step to a value from the `ACVStepMode` enum."""
-        if mode not in self.vertical_step_modes:
-            raise ValueError(f"Invalid vertical step mode: {mode}")
+        """Set vertical step. Accepts ACVStepMode|int|str ('STEP_1' or '1')."""
+        # 1) 입력 정규화: enum / 이름 / 정수 모두 허용
+        if isinstance(mode, ACVStepMode):
+            level = int(mode)
+        elif isinstance(mode, int):
+            level = mode
+        elif isinstance(mode, str):
+            try:
+                # "STEP_1" 같은 enum 이름
+                level = int(ACVStepMode[mode])
+            except KeyError:
+                # "1" 같은 숫자 문자열
+                level = int(mode)
+        else:
+            raise ValueError(f"Invalid vertical step mode type: {type(mode)}")
+
+        # 2) 유효 범위: 1..6
+        if level not in range(1, 7):
+            raise ValueError(f"Invalid vertical step level: {level}")
+
+        # 3) 명령 키 해석
         keys = self._get_cmd_keys(CMD_STATE_WDIR_VSTEP)
-        step_mode = self.model_info.enum_value(keys[2], ACVStepMode[mode].value)
-        await self.set(keys[0], keys[1], key=keys[2], value=step_mode)
+        # 일부 구현에서 keys[2]가 리스트일 수 있으므로 안전하게 실키로 보정
+        prop_key = self._get_state_key(STATE_WDIR_VSTEP[0]) or STATE_WDIR_VSTEP[1]
+
+        # 4) enum 매핑 없이 정수 그대로 전송 (네 장치가 1..6을 직접 받음)
+        await self.set(keys[0], keys[1], key=prop_key, value=level)
+
 
     async def set_vertical_swing_mode(self, mode):
         """Set the vertical swing to a value from the `ACVSwingMode` enum."""
@@ -1146,16 +1177,41 @@ class AirConditionerStatus(DeviceStatus):
             return None
         return value == MODE_ON
 
+    # @property
+    # def vertical_step_mode(self):
+    #     """Return current vertical step mode."""
+    #     key = self._get_state_key(STATE_WDIR_VSTEP)
+    #     if (value := self.lookup_enum(key, True)) is None:
+    #         return None
+    #     try:
+    #         return ACVStepMode(value).name
+    #     except ValueError:
+    #         return None
     @property
     def vertical_step_mode(self):
         """Return current vertical step mode."""
-        key = self._get_state_key(STATE_WDIR_VSTEP)
-        if (value := self.lookup_enum(key, True)) is None:
-            return None
+        # 키 해석: 심볼릭이 매핑되면 그걸, 아니면 실키 사용
+        key = self._get_state_key(STATE_WDIR_VSTEP[0]) or STATE_WDIR_VSTEP[1]
+
+        # range형이므로 enum lookup 말고 raw 값을 직접 읽어 정수 변환
+        raw = self._get_device_property(key)
         try:
-            return ACVStepMode(value).name
-        except ValueError:
-            return None
+            val = int(raw) if raw is not None else None
+        except (TypeError, ValueError):
+            val = None
+
+        if val in range(1, 7):
+            return ACVStepMode(val).name
+
+        # 혹시 다른 모델에서 enum 테이블이 존재할 수 있으니 폴백
+        if (enum_val := self.lookup_enum(key, True)) is not None:
+            try:
+                return ACVStepMode(enum_val).name
+            except ValueError:
+                pass
+
+        return None
+
 
     @property
     def vertical_swing_mode(self):
