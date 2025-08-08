@@ -268,7 +268,7 @@ class LGEACClimate(LGEClimate):
     @property
     def wind_direction_vertical(self) -> int:
         """Return the vertical wind direction setting."""
-        return self._device.vertical_wind_direction
+        return self._api.state.wind_direction_vertical
 
     @property
     def temperature_unit(self) -> str:
