@@ -69,8 +69,26 @@ MICROWAVE_SELECT: tuple[ThinQSelectEntityDescription, ...] = (
     ),
 )
 
+# === AC vertical wind step (1..6) ===
+AC_VSTEP_SELECT: tuple[ThinQSelectEntityDescription, ...] = (
+    ThinQSelectEntityDescription(
+        key="ac_vertical_wind_step",                  # 임의 키 (state.device_features 안 써도 됨)
+        name="Vertical Wind Step",
+        icon="mdi:unfold-more-vertical",
+        # 옵션은 기기에서 노출한 vertical_step_modes(IntEnum 리스트)를 문자열로 변환
+        options_fn=lambda x: [str(int(m)) for m in (x.device.vertical_step_modes or [])],
+        # 선택 시 1..6 정수로 변환해서 장치 API 호출 (async 함수여야 함)
+        select_option_fn=lambda x, option: x.device.set_vertical_step_mode(int(option)),
+        # 현재 선택 값: 상태에서 정수(1..6)를 문자열로
+        value_fn=lambda x: (str(v) if isinstance((v := x.state.wind_direction_vertical), int) and 1 <= v <= 6 else None),
+        # 장치가 vStep을 노출할 때만 엔티티 생성
+        available_fn=lambda x: bool(x.device.vertical_step_modes),
+    ),
+)
+
 SELECT_ENTITIES = {
     DeviceType.MICROWAVE: MICROWAVE_SELECT,
+    DeviceType.AC: AC_VSTEP_SELECT,  # ← 추가
     **{dev_type: WASH_DEV_SELECT for dev_type in WM_DEVICE_TYPES},
 }
 
