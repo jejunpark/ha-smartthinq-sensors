@@ -1188,23 +1188,23 @@ class AirConditionerStatus(DeviceStatus):
     #     except ValueError:
     #         return None
     def wind_direction_vertical(self) -> int | None:
-    """Return current vertical wind step as int (1..6) or None."""
-    # 리스트 전체를 넘기는게 에너지/다른 센서들 패턴과 동일
-    key = self._get_state_key(STATE_WDIR_VSTEP)
+        """Return current vertical wind step as int (1..6) or None."""
+        # 리스트 전체를 넘기는게 에너지/다른 센서들 패턴과 동일
+        key = self._get_state_key(STATE_WDIR_VSTEP)
 
-    # Status는 _get_device_property가 없으니 _data에서 직접 읽음
-    raw = self._data.get(key)
-    val = self.to_int_or_none(raw)
+        # Status는 _get_device_property가 없으니 _data에서 직접 읽음
+        raw = self._data.get(key)
+        val = self.to_int_or_none(raw)
 
-    if val is None:
-        # (호환) 일부 모델이 enum 같이 줄 수도 있으니 폴백
-        enum_val = self.lookup_enum(key, True)
-        try:
-            val = int(enum_val) if enum_val is not None else None
-        except (TypeError, ValueError):
-            val = None
+        if val is None:
+            # (호환) 일부 모델이 enum 같이 줄 수도 있으니 폴백
+            enum_val = self.lookup_enum(key, True)
+            try:
+                val = int(enum_val) if enum_val is not None else None
+            except (TypeError, ValueError):
+                val = None
 
-    return val if val in (1, 2, 3, 4, 5, 6) else None
+        return val if val in (1, 2, 3, 4, 5, 6) else None
 
 
 
