@@ -1188,12 +1188,9 @@ class AirConditionerStatus(DeviceStatus):
     #     except ValueError:
     #         return None
     @property
-    def vertical_step_mode(self):
-        """Return current vertical step mode."""
-        # 키 해석: 심볼릭이 매핑되면 그걸, 아니면 실키 사용
+    def wind_direction_vertical(self):
+        """Return current vertical wind step as int (1..6) or None."""
         key = self._get_state_key(STATE_WDIR_VSTEP[0]) or STATE_WDIR_VSTEP[1]
-
-        # range형이므로 enum lookup 말고 raw 값을 직접 읽어 정수 변환
         raw = self._get_device_property(key)
         try:
             val = int(raw) if raw is not None else None
@@ -1201,16 +1198,17 @@ class AirConditionerStatus(DeviceStatus):
             val = None
 
         if val in range(1, 7):
-            return ACVStepMode(val).name
+            return val  # ← 정수 반환
 
-        # 혹시 다른 모델에서 enum 테이블이 존재할 수 있으니 폴백
+        # 폴백: enum 매핑이 있으면 숫자로 변환
         if (enum_val := self.lookup_enum(key, True)) is not None:
             try:
-                return ACVStepMode(enum_val).name
-            except ValueError:
-                pass
+                return int(enum_val)
+            except (TypeError, ValueError):
+                return None
 
         return None
+
 
 
     @property
