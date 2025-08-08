@@ -208,6 +208,9 @@ class LGEACClimate(LGEClimate):
 
         self._attr_preset_mode = None
 
+        # 여기
+        self._attr_wind_direction_vertical = self._device.vertical_step_modes or None
+
         self._hvac_mode_lookup: dict[str, HVACMode] | None = None
         self._preset_mode_lookup: dict[str, str] | None = None
 
@@ -260,6 +263,12 @@ class LGEACClimate(LGEClimate):
     def target_temperature_step(self) -> float:
         """Return the supported step of target temperature."""
         return self._device.target_temperature_step
+    
+    # 여기
+    @property
+    def wind_direction_vertical(self) -> int:
+        """Return the vertical wind direction setting."""
+        return self._api.state.wind_direction_vertical
 
     @property
     def temperature_unit(self) -> str:

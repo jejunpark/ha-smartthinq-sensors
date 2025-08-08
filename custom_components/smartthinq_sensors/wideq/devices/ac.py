@@ -243,9 +243,7 @@ class ACHSwingMode(Enum):
     """The swing mode for an AC/HVAC device."""
 
     정지 = "@OFF"
-    좌측 = "@LEFT_ON"
-    우측 = "@RIGHT_ON"
-    좌우 = "@ALL_ON"
+    회전 = "@ALL_ON"
 
 class ACHStepMode(Enum):
     """
