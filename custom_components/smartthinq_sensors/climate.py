@@ -55,7 +55,7 @@ HVAC_MODE_LOOKUP: dict[str, HVACMode] = {
     ACMode.HEAT.name: HVACMode.HEAT,
     ACMode.DRY.name: HVACMode.DRY,
     ACMode.COOL.name: HVACMode.COOL,
-    ACMode.AIRCLEAN.name: HVACMode.FAN_ONLY,
+    ACMode.FAN.name: HVACMode.FAN_ONLY,
     ACMode.ACO.name: HVACMode.HEAT_COOL,
 }
 
