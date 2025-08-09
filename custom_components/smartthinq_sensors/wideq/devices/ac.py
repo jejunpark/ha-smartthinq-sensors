@@ -584,7 +584,7 @@ class AirConditionerDevice(Device):
     @property
     def vertical_step_mode(self) -> int | None:
         """Pass-through to status.vertical_step_mode."""
-    r   eturn getattr(self._status, "vertical_step_mode", None)
+        return getattr(self._status, "vertical_step_mode", None)
 
     @cached_property
     def vertical_swing_modes(self):
