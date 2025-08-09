@@ -80,7 +80,7 @@ AC_VSTEP_SELECT: tuple[ThinQSelectEntityDescription, ...] = (
         # 선택 시 1..6 정수로 변환해서 장치 API 호출 (async 함수여야 함)
         select_option_fn=lambda x, option: x.device.set_vertical_step_mode(int(option)),
         # 현재 선택 값: 상태에서 정수(1..6)를 문자열로
-        value_fn=lambda x: (str(v) if isinstance((v := x.state.wind_direction_vertical), int) and 1 <= v <= 6 else None),
+        value_fn=lambda x: (str(v) if isinstance((v := x.device.vertical_step_mode), int) and 1 <= v <= 6 else None),
         # 장치가 vStep을 노출할 때만 엔티티 생성
         available_fn=lambda x: bool(x.device.vertical_step_modes),
     ),
