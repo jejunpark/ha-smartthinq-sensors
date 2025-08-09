@@ -1187,7 +1187,8 @@ class AirConditionerStatus(DeviceStatus):
     #         return ACVStepMode(value).name
     #     except ValueError:
     #         return None
-    def wind_direction_vertical(self) -> int | None:
+    @property
+    def vertical_step_mode(self) -> int | None:
         """Return current vertical wind step as int (1..6) or None."""
         # 리스트 전체를 넘기는게 에너지/다른 센서들 패턴과 동일
         key = self._get_state_key(STATE_WDIR_VSTEP)
