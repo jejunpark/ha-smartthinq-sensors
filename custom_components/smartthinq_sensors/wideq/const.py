@@ -40,7 +40,7 @@ class AirConditionerFeatures(StrEnum):
     LIGHTING_DISPLAY = "lighting_display"
     MODE_AIRCLEAN = "mode_airclean"
     POWERSAVE = "powersave"
-    AUTODRY = "autodry"
+    AUTODRY = "auto_dry_mode"
     MODE_AWHP_SILENT = "mode_awhp_silent"
     MODE_JET = "mode_jet"
     PM1 = "pm1"
