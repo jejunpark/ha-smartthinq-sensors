@@ -119,7 +119,7 @@ AC_AUTODRY_SELECT: tuple[ThinQSelectEntityDescription, ...] = (
 
 SELECT_ENTITIES = {
     DeviceType.MICROWAVE: MICROWAVE_SELECT,
-    DeviceType.AC: AC_VSTEP_SELECT,  # ← 추가
+    DeviceType.AC: AC_VSTEP_SELECT + AC_AUTODRY_SELECT,  # ← 추가
     **{dev_type: WASH_DEV_SELECT for dev_type in WM_DEVICE_TYPES},
 }
 
