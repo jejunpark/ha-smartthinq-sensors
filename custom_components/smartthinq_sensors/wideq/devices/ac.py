@@ -285,6 +285,12 @@ class JetModeSupport(Enum):
     HEAT = 2
     BOTH = 3
 
+class ACAutoDryMode(Enum):
+    OFF = "@OFF"          # 꺼짐
+    MIN_10 = "@ON"        # 10분 (모델에 따라 @ON이 10분 의미)
+    MIN_30 = "@30MIN"     # 30분
+    MIN_60 = "@60MIN"     # 60분
+    AI = "@AIAUTODRY"     # AI건조
 
 class AirConditionerDevice(Device):
     """A higher-level interface for a AC."""
@@ -581,6 +587,13 @@ class AirConditionerDevice(Device):
             return []
         return list(ACVStepMode)
     
+    @cached_property
+    def auto_dry_modes(self):
+        """Return available AutoDry modes as a list of ACAutoDryMode."""
+        if not self._is_mode_supported(SUPPORT_AUTODRY):
+            return []
+        return self._get_property_values(STATE_AUTODRY, ACAutoDryMode)
+    
     @property
     def vertical_step_mode(self) -> int | None:
         """Pass-through to status.vertical_step_mode."""
@@ -825,15 +838,26 @@ class AirConditionerDevice(Device):
         mode = self.model_info.enum_value(keys[2], mode_key)
         await self.set(keys[0], keys[1], key=keys[2], value=mode)
 
-    async def set_autodry(self, status: bool):
-        """Set the Autodry or off."""
+    # async def set_autodry(self, status: bool):
+    #     """Set the Autodry or off."""
+    #     if not self.is_autodry_supported:
+    #         raise ValueError("Autodry not supported")
+
+    #     keys = self._get_cmd_keys(CMD_STATE_AUTODRY)
+    #     mode_key = MODE_ON if status else MODE_OFF
+    #     mode = self.model_info.enum_value(keys[2], mode_key)
+    #     await self.set(keys[0], keys[1], key=keys[2], value=mode)
+    async def set_auto_dry_mode(self, mode: AutoDryMode):
+        """Set the Autodry mode."""
         if not self.is_autodry_supported:
             raise ValueError("Autodry not supported")
 
+        if mode not in AutoDryMode:
+            raise ValueError(f"Invalid autodry mode: {mode}")
+
         keys = self._get_cmd_keys(CMD_STATE_AUTODRY)
-        mode_key = MODE_ON if status else MODE_OFF
-        mode = self.model_info.enum_value(keys[2], mode_key)
-        await self.set(keys[0], keys[1], key=keys[2], value=mode)
+        autodry_mode = self.model_info.enum_value(keys[2], mode.value)
+        await self.set(keys[0], keys[1], key=keys[2], value=autodry_mode)
 
     async def set_mode_jet(self, status: bool):
         """Set the Jet mode on or off."""
@@ -1319,16 +1343,27 @@ class AirConditionerStatus(DeviceStatus):
         status = value == MODE_ON
         return self._update_feature(AirConditionerFeatures.POWERSAVE, status, False)
 
+    # @property
+    # def autodry(self):
+    #     """Return Autodry status."""
+    #     if not self._device.is_autodry_supported:
+    #         return None
+    #     key = self._get_state_key(STATE_AUTODRY)
+    #     if (value := self.lookup_enum(key, True)) is None:
+    #         return None
+    #     status = value == MODE_ON
+    #     return self._update_feature(AirConditionerFeatures.AUTODRY, status, False)
+
     @property
-    def autodry(self):
-        """Return Autodry status."""
-        if not self._device.is_autodry_supported:
-            return None
+    def auto_dry_mode(self) -> str | None:
+        """Return current AutoDry mode as ACAutoDryMode.name."""
         key = self._get_state_key(STATE_AUTODRY)
         if (value := self.lookup_enum(key, True)) is None:
             return None
-        status = value == MODE_ON
-        return self._update_feature(AirConditionerFeatures.AUTODRY, status, False)
+        try:
+            return ACAutoDryMode(value).name
+        except ValueError:
+            return None
 
     @property
     def mode_jet(self):
