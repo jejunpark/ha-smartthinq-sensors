@@ -1575,7 +1575,7 @@ class AirConditionerStatus(DeviceStatus):
             self.pm1,
             self.mode_airclean,
             self.powersave,
-            self.autodry,
+            self.auto_dry_mode,
             self.mode_jet,
             self.lighting_display,
             self.water_in_current_temp,
