@@ -17,6 +17,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from . import LGEDevice
 from .const import DOMAIN, LGE_DEVICES, LGE_DISCOVERY_NEW
 from .wideq import WM_DEVICE_TYPES, DeviceType, MicroWaveFeatures
+from .wideq.devices.ac import ACAutoDryMode 
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -83,6 +84,36 @@ AC_VSTEP_SELECT: tuple[ThinQSelectEntityDescription, ...] = (
         value_fn=lambda x: (str(v) if isinstance((v := x.device.vertical_step_mode), int) and 1 <= v <= 6 else None),
         # 장치가 vStep을 노출할 때만 엔티티 생성
         available_fn=lambda x: bool(x.device.vertical_step_modes),
+    ),
+)
+
+
+AUTO_DRY_LABEL = {
+    ACAutoDryMode.OFF: "꺼짐",
+    ACAutoDryMode.MIN_10: "10분",
+    ACAutoDryMode.MIN_30: "30분",
+    ACAutoDryMode.MIN_60: "60분",
+    ACAutoDryMode.AI: "AI건조",
+}
+AUTO_DRY_FROM_LABEL = {v: k for k, v in AUTO_DRY_LABEL.items()}  # 역맵
+
+AC_AUTODRY_SELECT: tuple[ThinQSelectEntityDescription, ...] = (
+    ThinQSelectEntityDescription(
+        key="ac_autodry_mode",  # 임의 키
+        name="Auto Dry",
+        icon="mdi:hair-dryer",
+        # 옵션: 디바이스가 지원하는 enum 목록을 한글 라벨로 변환
+        options_fn=lambda x: [AUTO_DRY_LABEL[m] for m in (x.device.auto_dry_modes or [])],
+        # 선택: 라벨 -> enum 으로 변환해서 장치로 전달 (awaitable)
+        select_option_fn=lambda x, option: x.device.set_auto_dry_mode(AUTO_DRY_FROM_LABEL[option]),
+        # 현재 선택: state.auto_dry_mode가 'AI' 또는 '@AIAUTODRY' 등 무엇을 주더라도 라벨로 환산
+        value_fn=lambda x: (
+            AUTO_DRY_LABEL.get(x.device.auto_dry_mode)
+            if x.device.auto_dry_mode in AUTO_DRY_LABEL
+            else None
+        ),
+        # 지원 시에만 엔티티 생성
+        available_fn=lambda x: bool(x.device.auto_dry_modes),
     ),
 )
 
