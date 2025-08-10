@@ -599,6 +599,23 @@ class AirConditionerDevice(Device):
         """Pass-through to status.vertical_step_mode."""
         return getattr(self._status, "vertical_step_mode", None)
 
+    @property
+    def auto_dry_mode(self) -> ACAutoDryMode | None:
+        """Return current Auto Dry mode as Enum (normalize from state)."""
+        raw = getattr(self._status, "auto_dry_mode", None)
+        if raw is None:
+            return None
+        if isinstance(raw, ACAutoDryMode):
+            return raw
+        if isinstance(raw, str):
+            if raw in ACAutoDryMode.__members__:    # 'OFF', 'MIN_30', ...
+                return ACAutoDryMode[raw]
+            try:
+                return ACAutoDryMode(raw)           # '@OFF', '@30MIN', '@AIAUTODRY'
+            except Exception:
+                return None
+        return None
+
     @cached_property
     def vertical_swing_modes(self):
         """Return a list of available vertical swing modes."""
@@ -847,12 +864,12 @@ class AirConditionerDevice(Device):
     #     mode_key = MODE_ON if status else MODE_OFF
     #     mode = self.model_info.enum_value(keys[2], mode_key)
     #     await self.set(keys[0], keys[1], key=keys[2], value=mode)
-    async def set_auto_dry_mode(self, mode: AutoDryMode):
+    async def set_auto_dry_mode(self, mode: ACAutoDryMode):
         """Set the Autodry mode."""
         if not self.is_autodry_supported:
             raise ValueError("Autodry not supported")
 
-        if mode not in AutoDryMode:
+        if mode not in ACAutoDryMode:
             raise ValueError(f"Invalid autodry mode: {mode}")
 
         keys = self._get_cmd_keys(CMD_STATE_AUTODRY)
