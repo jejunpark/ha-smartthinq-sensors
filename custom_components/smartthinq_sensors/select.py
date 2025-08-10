@@ -113,11 +113,19 @@ AC_SELECT: tuple[ThinQSelectEntityDescription, ...] = (
         name="Auto Dry",
         icon="mdi:hair-dryer",
         # 옵션: 디바이스가 지원하는 enum 목록을 한글 라벨로 변환
-        options_fn=lambda x: [AUTO_DRY_LABEL[m] for m in (x.device.auto_dry_modes or [])],
+        options_fn=lambda x: [
+            AUTO_DRY_LABEL.get(e)
+            for e in (_autodry_to_enum(m) for m in (x.device.auto_dry_modes or []))
+            if e is not None and AUTO_DRY_LABEL.get(e) is not None
+        ],
         # 선택: 라벨 -> enum 으로 변환해서 장치로 전달 (awaitable)
         select_option_fn=lambda x, option: x.device.set_auto_dry_mode(AUTO_DRY_FROM_LABEL[option]),
         # 현재 선택: state.auto_dry_mode가 'AI' 또는 '@AIAUTODRY' 등 무엇을 주더라도 라벨로 환산
-        value_fn=lambda x: AUTO_DRY_LABEL.get(getattr(x.device, "auto_dry_mode", None)),
+        value_fn=lambda x: (
+            (lambda e: AUTO_DRY_LABEL.get(e) if e is not None else None)(
+                _autodry_to_enum(getattr(x.device, "auto_dry_mode", None))
+            )
+        ),
         # 지원 시에만 엔티티 생성
         available_fn=lambda x: bool(x.device.auto_dry_modes),
     ),
