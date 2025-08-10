@@ -40,6 +40,16 @@ class ThinQSelectEntityDescription(
     value_fn: Callable[[Any], str] | None = None
 
 
+AUTO_DRY_LABEL = {
+    ACAutoDryMode.OFF: "꺼짐",
+    ACAutoDryMode.MIN_10: "10분",
+    ACAutoDryMode.MIN_30: "30분",
+    ACAutoDryMode.MIN_60: "60분",
+    ACAutoDryMode.AI: "AI건조",
+}
+AUTO_DRY_FROM_LABEL = {v: k for k, v in AUTO_DRY_LABEL.items()}  # 역맵
+
+
 WASH_DEV_SELECT: tuple[ThinQSelectEntityDescription, ...] = (
     ThinQSelectEntityDescription(
         key="course_selection",
@@ -71,7 +81,7 @@ MICROWAVE_SELECT: tuple[ThinQSelectEntityDescription, ...] = (
 )
 
 # === AC vertical wind step (1..6) ===
-AC_VSTEP_SELECT: tuple[ThinQSelectEntityDescription, ...] = (
+AC_SELECT: tuple[ThinQSelectEntityDescription, ...] = (
     ThinQSelectEntityDescription(
         key="ac_vertical_wind_step",                  # 임의 키 (state.device_features 안 써도 됨)
         name="Vertical Wind Step",
@@ -85,19 +95,6 @@ AC_VSTEP_SELECT: tuple[ThinQSelectEntityDescription, ...] = (
         # 장치가 vStep을 노출할 때만 엔티티 생성
         available_fn=lambda x: bool(x.device.vertical_step_modes),
     ),
-)
-
-
-AUTO_DRY_LABEL = {
-    ACAutoDryMode.OFF: "꺼짐",
-    ACAutoDryMode.MIN_10: "10분",
-    ACAutoDryMode.MIN_30: "30분",
-    ACAutoDryMode.MIN_60: "60분",
-    ACAutoDryMode.AI: "AI건조",
-}
-AUTO_DRY_FROM_LABEL = {v: k for k, v in AUTO_DRY_LABEL.items()}  # 역맵
-
-AC_AUTODRY_SELECT: tuple[ThinQSelectEntityDescription, ...] = (
     ThinQSelectEntityDescription(
         key="ac_autodry_mode",  # 임의 키
         name="Auto Dry",
@@ -119,7 +116,7 @@ AC_AUTODRY_SELECT: tuple[ThinQSelectEntityDescription, ...] = (
 
 SELECT_ENTITIES = {
     DeviceType.MICROWAVE: MICROWAVE_SELECT,
-    DeviceType.AC: AC_VSTEP_SELECT + AC_AUTODRY_SELECT,  # ← 추가
+    DeviceType.AC: AC_SELECT,
     **{dev_type: WASH_DEV_SELECT for dev_type in WM_DEVICE_TYPES},
 }
 
