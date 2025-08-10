@@ -49,6 +49,19 @@ AUTO_DRY_LABEL = {
 }
 AUTO_DRY_FROM_LABEL = {v: k for k, v in AUTO_DRY_LABEL.items()}  # 역맵
 
+def _autodry_to_enum(val):
+    """Normalize AutoDry to Enum (accept Enum, name 'OFF', or value '@OFF')."""
+    if isinstance(val, ACAutoDryMode):
+        return val
+    if isinstance(val, str):
+        if val in ACAutoDryMode.__members__:    # 'OFF', 'MIN_30', 'AI' ...
+            return ACAutoDryMode[val]
+        try:
+            return ACAutoDryMode(val)           # '@OFF', '@30MIN', '@AIAUTODRY' ...
+        except Exception:
+            return None
+    return None
+
 
 WASH_DEV_SELECT: tuple[ThinQSelectEntityDescription, ...] = (
     ThinQSelectEntityDescription(
@@ -100,14 +113,18 @@ AC_SELECT: tuple[ThinQSelectEntityDescription, ...] = (
         name="Auto Dry",
         icon="mdi:hair-dryer",
         # 옵션: 디바이스가 지원하는 enum 목록을 한글 라벨로 변환
-        options_fn=lambda x: [AUTO_DRY_LABEL[m] for m in (x.device.auto_dry_modes or [])],
+        options_fn=lambda x: [
+            AUTO_DRY_LABEL[e]
+            for e in (_autodry_to_enum(m) for m in (x.device.auto_dry_modes or []))
+            if e is not None
+        ],
         # 선택: 라벨 -> enum 으로 변환해서 장치로 전달 (awaitable)
         select_option_fn=lambda x, option: x.device.set_auto_dry_mode(AUTO_DRY_FROM_LABEL[option]),
         # 현재 선택: state.auto_dry_mode가 'AI' 또는 '@AIAUTODRY' 등 무엇을 주더라도 라벨로 환산
         value_fn=lambda x: (
-            AUTO_DRY_LABEL.get(x.device.auto_dry_mode)
-            if x.device.auto_dry_mode in AUTO_DRY_LABEL
-            else None
+            (lambda e: AUTO_DRY_LABEL.get(e) if e is not None else None)(
+                _autodry_to_enum(getattr(x.device, "auto_dry_mode", None))
+            )
         ),
         # 지원 시에만 엔티티 생성
         available_fn=lambda x: bool(x.device.auto_dry_modes),
