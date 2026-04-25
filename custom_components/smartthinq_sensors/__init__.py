@@ -239,14 +239,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             region,
             language,
         )
-    
 
     def _update_clientid_callback(client_id: str) -> None:
-    """Update config entry with the new client id."""
-    hass.config_entries.async_update_entry(
-        entry, data={**entry.data, CONF_CLIENT_ID: client_id}
-    )
-
+        """Update config entry with the new client id."""
+        hass.config_entries.async_update_entry(
+            entry, data={**entry.data, CONF_CLIENT_ID: client_id}
+        )
 
     # if network is not connected we can have some error
     # raising ConfigEntryNotReady platform setup will be retried
